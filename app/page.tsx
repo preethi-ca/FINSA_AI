@@ -9,7 +9,7 @@ const FinsaChatPro = () => {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  
+
   // Ref to automatically scroll to the bottom of the chat
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +19,7 @@ const FinsaChatPro = () => {
     }
   }, [messages, isTyping]);
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -29,10 +29,10 @@ const FinsaChatPro = () => {
     setInput('');
     setIsTyping(true);
 
-    // MOCK RESPONSE LOGIC (Replace with real API call after your Feb 24 final)
+    // MOCK RESPONSE LOGIC 
     setTimeout(() => {
       let aiResponse = "That's a great question. I'm currently in demo mode, but I can tell you that our portfolios are a great way to gain hands-on experience.";
-      
+
       if (userQuery.includes("bull's cage") || userQuery.includes("bulls cage")) {
         aiResponse = "Bull's Cage is our flagship stock pitch competition. It’s a great way to practice valuation and presentation skills in front of industry judges!";
       } else if (userQuery.includes("hiring") || userQuery.includes("apply") || userQuery.includes("join")) {
@@ -51,7 +51,7 @@ const FinsaChatPro = () => {
       {/* 1. The Chat Window */}
       {isOpen && (
         <div className="mb-4 w-80 sm:w-[400px] h-[550px] flex flex-col border border-white/20 rounded-3xl bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden animate-in fade-in zoom-in duration-200">
-          
+
           {/* High-End Header */}
           <div className="bg-[#1a1a1a] p-5 text-white flex justify-between items-center border-b border-white/10">
             <div>
@@ -73,16 +73,15 @@ const FinsaChatPro = () => {
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-5 bg-[#fcfcfc]">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`p-4 rounded-2xl text-[13.5px] leading-relaxed max-w-[85%] shadow-sm ${
-                  msg.role === 'user' 
-                    ? 'bg-[#582C83] text-white rounded-tr-none' 
+                <div className={`p-4 rounded-2xl text-[13.5px] leading-relaxed max-w-[85%] shadow-sm ${msg.role === 'user'
+                    ? 'bg-[#582C83] text-white rounded-tr-none'
                     : 'bg-white border border-gray-100 text-gray-700 rounded-tl-none'
-                }`}>
+                  }`}>
                   {msg.content}
                 </div>
               </div>
             ))}
-            
+
             {/* Typing Indicator */}
             {isTyping && (
               <div className="flex justify-start">
@@ -97,10 +96,10 @@ const FinsaChatPro = () => {
 
           {/* Professional Input Area */}
           <form onSubmit={handleSend} className="p-4 bg-white border-t border-gray-100 flex items-center gap-2">
-            <input 
+            <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Inquire about recruitment..." 
+              placeholder="Inquire about recruitment..."
               className="flex-1 bg-gray-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#582C83]/20 outline-none transition-all"
             />
             <button type="submit" className="bg-[#1a1a1a] text-white p-3 rounded-xl hover:bg-[#333] transition-all active:scale-95">
@@ -110,15 +109,15 @@ const FinsaChatPro = () => {
 
           {/* Footer Branding */}
           <div className="bg-gray-50 py-2 px-4 flex justify-center border-t border-gray-100">
-             <span className="text-[9px] text-gray-400 uppercase tracking-[0.2em] font-medium flex items-center gap-1">
-               <ShieldCheck size={10} /> Verified Student Resource
-             </span>
+            <span className="text-[9px] text-gray-400 uppercase tracking-[0.2em] font-medium flex items-center gap-1">
+              <ShieldCheck size={10} /> Verified Student Resource
+            </span>
           </div>
         </div>
       )}
 
       {/* Premium Launcher Button */}
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="bg-[#1a1a1a] text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-90 group"
       >
