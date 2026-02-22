@@ -2,8 +2,11 @@
   "name": "finsa-ai",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "minimatch": ">=10.2.1"
+  },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
