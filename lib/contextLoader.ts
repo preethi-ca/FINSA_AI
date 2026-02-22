@@ -6,10 +6,12 @@ const CONTEXTS_DIR = path.join(process.cwd(), 'contexts');
 
 // Map of context filename → keywords that trigger it
 const CONTEXT_KEYWORDS: Record<string, string[]> = {
-  'recruitment.md': ['hiring', 'apply', 'join', 'recruitment', 'application', 'role', 'position', 'work', 'member'],
-  'portfolios.md': ['portfolio', 'equity', 'fixed income', 'quantitative', 'invest', 'fund', 'asset'],
+  'recruitment.md': ['hiring', 'apply', 'join', 'recruitment', 'application', 'role', 'position', 'resume', 'interview', 'timeline', 'faq', 'choose portfolio', 'placement'],
+  'portfolios.md': ['portfolio', 'equity', 'fixed income', 'quantitative', 'invest', 'fund', 'asset', 'public equity', 'private equity', 'operations'],
   'bulls_cage.md': ["bull's cage", 'bulls cage', 'stock pitch', 'competition', 'pitch', 'valuation'],
-  'general.md': ['finsa', 'about', 'who are you', 'what is finsa', 'events', 'workshop', 'speaker'],
+  'events.md': ['event', 'events', 'upcoming', 'speaker', 'workshop', 'recap', 'calendar'],
+  'exec.md': ['exec', 'executive', 'leadership', 'contact', 'office hours', 'bios', 'team', 'who runs'],
+  'general.md': ['finsa', 'about', 'who are you', 'what is finsa', 'mission', 'history', 'structure', 'culture'],
 };
 
 export function findBestContext(userQuery: string): string {
