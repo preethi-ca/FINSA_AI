@@ -21,4 +21,4 @@
 - **When do applications open?** Typically September; check the Join Us page and our socials for exact dates.
 - **Who can apply?** Membership is open to all students interested in finance; specific eligibility (e.g. year, program) is stated on the application each cycle.
 - **Where do I apply?** On the FINSA website, Join Us page. Submit résumé and cover letter as instructed.
-- **Questions about hiring?** Email recruitment@finsa.ca.
+- **Questions about hiring?** Email financeclub.sfu@gmail.com.
