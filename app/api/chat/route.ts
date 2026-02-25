@@ -32,7 +32,7 @@ Assistant:`;
     const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
-          maxOutputTokens: 200, // keeps responses short
+          maxOutputTokens: 700, // keeps responses short
           temperature: 0.7,
         },
       });
