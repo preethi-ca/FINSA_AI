@@ -11,7 +11,7 @@ const MIN_SCORE_TO_INCLUDE = 1;
 
 // Map of context filename → keywords that trigger it
 const CONTEXT_KEYWORDS: Record<string, string[]> = {
-  'recruitment.md': ['hiring', 'apply', 'join', 'recruitment', 'application', 'role', 'position', 'resume', 'résumé', 'interview', 'timeline', 'faq', 'choose portfolio', 'placement', 'tips'],
+  'recruitment.md': ['hire', 'hiring', 'hires', 'hiring cycle', 'when does finsa hire', 'apply', 'join', 'recruitment', 'application', 'role', 'position', 'resume', 'résumé', 'interview', 'timeline', 'faq', 'choose portfolio', 'placement', 'tips'],
   'portfolios.md': ['portfolio', 'portfolios', 'different portfolios', 'what portfolios', 'which portfolios', 'finance', 'design', 'technology', 'tech', 'external', 'corporate relations', 'marketing', 'hr', 'human resources', 'events', 'branding', 'sponsor', 'treasury', 'budget'],
   'bulls_cage.md': ["bull's cage", 'bulls cage', 'stock pitch', 'competition', 'pitch', 'valuation'],
   'events.md': ['event', 'events', 'upcoming', 'speaker', 'workshop', 'recap', 'calendar'],
