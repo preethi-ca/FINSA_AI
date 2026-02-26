@@ -136,4 +136,4 @@ The model uses **message** (and the rest of **messages**) plus the context loade
 
 ---
 
-If you need to explain this in a meeting, you can say: *“The bot picks 1–3 markdown files from our `contexts/` folder based on keywords in the user’s message, sends that text plus the full chat to Gemini, and we show which files were used under each answer. We can add or edit those files anytime to change what the bot knows.”*
+
