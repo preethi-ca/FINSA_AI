@@ -39,9 +39,22 @@ const FinsaChatPro = () => {
         }),
       });
 
-      const data = await res.json();
-      const aiResponse = data.reply || "Sorry, I couldn't process that. Please try again.";
+      let data: { reply?: string; error?: string; contextSources?: string[] } = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+
       const sources: string[] = data.contextSources ?? [];
+      let aiResponse = data.reply?.trim() ?? '';
+
+      if (!aiResponse) {
+        if (data.error) aiResponse = `Error: ${data.error}`;
+        else if (!res.ok) aiResponse = `Error: Request failed (${res.status}).`;
+        else aiResponse = "I couldn't generate a response. Please try again.";
+      }
+
       setMessages((prev) => [...prev, { role: 'ai', content: aiResponse, sources }]);
     } catch {
       setMessages((prev) => [...prev, { role: 'ai', content: 'Something went wrong. Please try again.' }]);

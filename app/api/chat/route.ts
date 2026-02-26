@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getContextForQuery } from '@/lib/contextLoader';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+function getGeminiApiKeys(): string[] {
+  const single = (process.env.GEMINI_API_KEY ?? '').trim();
+  const multi = (process.env.GEMINI_API_KEYS ?? '')
+    .split(',')
+    .map((k) => k.trim())
+    .filter(Boolean);
+  return Array.from(new Set([single, ...multi].filter(Boolean)));
+}
 
 /** Models in order of preference; we fall back to the next when we hit rate limit / quota. */
 const FALLBACK_MODELS = [
@@ -29,10 +36,31 @@ function isRateLimitOrQuotaError(error: unknown): boolean {
   );
 }
 
+function isUnavailableModelError(error: unknown): boolean {
+  const msg = String(error instanceof Error ? error.message : error).toLowerCase();
+  return (
+    msg.includes('404') ||
+    msg.includes('not found') ||
+    msg.includes('model is not found') ||
+    msg.includes('models/') ||
+    msg.includes('not supported for generatecontent') ||
+    msg.includes('unsupported') ||
+    msg.includes('call listmodels')
+  );
+}
+
 type ChatMessage = { role: 'user' | 'ai'; content: string };
 
 export async function POST(req: NextRequest) {
   try {
+    const apiKeys = getGeminiApiKeys();
+    if (apiKeys.length === 0) {
+      return NextResponse.json(
+        { error: 'Missing Gemini API key. Set GEMINI_API_KEY or GEMINI_API_KEYS.' },
+        { status: 500 }
+      );
+    }
+
     const body = await req.json();
     const message = typeof body.message === 'string' ? body.message : undefined;
     const messages: ChatMessage[] = Array.isArray(body.messages) ? body.messages : [];
@@ -49,11 +77,10 @@ export async function POST(req: NextRequest) {
     const systemInstruction = `You are FINSA AI, a helpful assistant for the Finance Students' Association (FINSA).
 
 RULES (follow strictly):
-1. Answer ONLY using the exact information in the CONTEXT block below. Use the wording and details from the context—do not paraphrase into a generic answer.
-2. Do not fabricate, infer, or add any information that is not explicitly in the context. No made-up dates, names, policies, or links.
-3. If the context does not contain information that answers the user's question, reply in one short sentence: "This isn't covered in our knowledge base. For this, please check the FINSA website or email financeclub.sfu@gmail.com."
-4. When the context does contain the answer, give a clear, direct answer based on that content. Do not say "the context does not contain enough information" if the context clearly addresses the question (e.g. "quant" or "quantitative" refers to the Quantitative Finance portfolio in the context).
-5. You may include links from the context (e.g. finsasfu.com) when they appear in the context. Do not invent links.
+1. Answer using the information in the CONTEXT block below. Be helpful and use the wording from the context. For general or opening questions (e.g. what is FINSA, what do you do, can you help), the context includes club info—use it to answer.
+2. Do not fabricate or add information that is not in the context. No made-up dates, names, policies, or links.
+3. Only say "This isn't covered in our knowledge base" when the user asks about something specific that is clearly not mentioned anywhere in the CONTEXT. If the context describes FINSA, the club, portfolios, recruitment, events, or contact info, use it—do not reply with "not in our knowledge base."
+4. When the context contains the answer, give a clear, direct answer. You may include links from the context (e.g. finsasfu.com). Do not invent links.
 
 --- CONTEXT ---
 ${context || '(No specific context matched. For any question, say: This is not in our knowledge base. Please check the FINSA website or email financeclub.sfu@gmail.com.)'}
@@ -70,31 +97,47 @@ ${context || '(No specific context matched. For any question, say: This is not i
       }
     }
 
-    // 4. Try each model in order; on rate limit / quota, fall back to the next
+    // 4. Try each key, then each model; on rate limit / quota / unavailable model / empty reply, fall back
     const generationConfig = { maxOutputTokens: 700, temperature: 0.65 };
     let lastError: unknown = null;
+    let allEmpty = false;
 
-    for (const modelId of FALLBACK_MODELS) {
-      try {
-        const model = genAI.getGenerativeModel({ model: modelId, systemInstruction });
-        const result = await model.generateContent({ contents, generationConfig });
-        const response = result.response;
-        if (!response.candidates?.length || !response.candidates[0].content?.parts?.length) {
-          console.warn(`[Chat API] ${modelId} returned empty/blocked response, trying next.`);
-          continue;
+    for (const apiKey of apiKeys) {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      for (const modelId of FALLBACK_MODELS) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelId, systemInstruction });
+          const result = await model.generateContent({ contents, generationConfig });
+          const response = result.response;
+          if (!response.candidates?.length || !response.candidates[0].content?.parts?.length) {
+            console.warn(`[Chat API] ${modelId} returned empty/blocked response, trying next.`);
+            continue;
+          }
+          const replyText = response.text()?.trim() ?? '';
+          if (!replyText) {
+            console.warn(`[Chat API] ${modelId} returned empty text, trying next.`);
+            allEmpty = true;
+            continue;
+          }
+          return NextResponse.json({ reply: replyText, contextSources: sources });
+        } catch (err) {
+          lastError = err;
+          if (isRateLimitOrQuotaError(err) || isUnavailableModelError(err)) {
+            console.warn(`[Chat API] ${modelId} unavailable/rate-limited, falling back to next model/key.`, err);
+            continue;
+          }
+          throw err;
         }
-        const replyText = response.text();
-        return NextResponse.json({ reply: replyText, contextSources: sources });
-      } catch (err) {
-        lastError = err;
-        if (isRateLimitOrQuotaError(err)) {
-          console.warn(`[Chat API] ${modelId} rate limited, falling back to next model.`, err);
-          continue;
-        }
-        throw err;
       }
     }
 
+    if (allEmpty) {
+      console.error('[Chat API] All models returned empty text.');
+      return NextResponse.json({
+        reply: "I couldn't generate a response for that. Please try rephrasing your question or email financeclub.sfu@gmail.com for help.",
+        contextSources: sources,
+      });
+    }
     console.error('[Chat API] All models failed or rate limited.', lastError);
     return NextResponse.json(
       { error: lastError instanceof Error ? lastError.message : 'All models unavailable or rate limited.' },

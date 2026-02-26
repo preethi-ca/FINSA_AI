@@ -12,11 +12,16 @@ const MIN_SCORE_TO_INCLUDE = 1;
 // Map of context filename → keywords that trigger it
 const CONTEXT_KEYWORDS: Record<string, string[]> = {
   'recruitment.md': ['hiring', 'apply', 'join', 'recruitment', 'application', 'role', 'position', 'resume', 'résumé', 'interview', 'timeline', 'faq', 'choose portfolio', 'placement', 'tips'],
-  'portfolios.md': ['portfolio', 'portfolios', 'finance', 'design', 'technology', 'tech', 'external', 'corporate relations', 'marketing', 'hr', 'human resources', 'events', 'branding', 'sponsor', 'treasury', 'budget'],
+  'portfolios.md': ['portfolio', 'portfolios', 'different portfolios', 'what portfolios', 'which portfolios', 'finance', 'design', 'technology', 'tech', 'external', 'corporate relations', 'marketing', 'hr', 'human resources', 'events', 'branding', 'sponsor', 'treasury', 'budget'],
   'bulls_cage.md': ["bull's cage", 'bulls cage', 'stock pitch', 'competition', 'pitch', 'valuation'],
   'events.md': ['event', 'events', 'upcoming', 'speaker', 'workshop', 'recap', 'calendar'],
   'exec.md': ['exec', 'executive', 'leadership', 'contact', 'office hours', 'bios', 'team', 'who runs'],
-  'general.md': ['finsa', 'about', 'who are you', 'what is finsa', 'mission', 'history', 'structure', 'culture', 'sponsor', 'sponsorship', 'donate', 'partner', 'partnership', 'website', 'link'],
+  'general.md': [
+    'finsa', 'about', 'who are you', 'what is finsa', 'mission', 'history', 'structure', 'culture',
+    'sponsor', 'sponsorship', 'donate', 'partner', 'partnership', 'website', 'link',
+    'what', 'tell', 'explain', 'help', 'club', 'know', 'info', 'information', 'guide', 'assist',
+    'hello', 'hi', 'question', 'you do', 'can you', 'first', 'start', 'begin',
+  ],
 };
 
 function scoreFile(query: string, keywords: string[]): number {
@@ -39,13 +44,18 @@ export function getContextForQuery(userQuery: string): { content: string; source
 
   // Sort by score descending; take up to MAX_CONTEXT_FILES with score >= MIN_SCORE_TO_INCLUDE (or at least the best one)
   scored.sort((a, b) => b.score - a.score);
-  const toLoad = scored.filter((s) => s.score >= MIN_SCORE_TO_INCLUDE).slice(0, MAX_CONTEXT_FILES);
-  const filesToLoad = toLoad.length > 0 ? toLoad : scored.filter((s) => s.score > 0).slice(0, 1);
+  let toLoad = scored.filter((s) => s.score >= MIN_SCORE_TO_INCLUDE).slice(0, MAX_CONTEXT_FILES);
+  if (toLoad.length === 0) toLoad = scored.filter((s) => s.score > 0).slice(0, 1);
+  // Never send empty context: if nothing matched, always include general.md so the model has baseline club info
+  if (toLoad.length === 0) {
+    const general = scored.find((s) => s.filename === 'general.md');
+    if (general) toLoad = [general];
+  }
 
   const parts: string[] = [];
   const sources: string[] = [];
 
-  for (const { filename } of filesToLoad) {
+  for (const { filename } of toLoad) {
     const filePath = path.join(CONTEXTS_DIR, filename);
     try {
       const content = fs.readFileSync(filePath, 'utf-8');
