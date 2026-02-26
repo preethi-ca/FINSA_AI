@@ -19,31 +19,31 @@ const FinsaChatPro = () => {
     }
   }, [messages, isTyping]);
 
-  const handleSend = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const userMessage = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
-    const userQuery = input.toLowerCase();
+    const userQuery = input;
     setInput('');
     setIsTyping(true);
 
-    // MOCK RESPONSE LOGIC 
-    setTimeout(() => {
-      let aiResponse = "That's a great question. I'm currently in demo mode, but I can tell you that our portfolios are a great way to gain hands-on experience.";
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userQuery }),
+      });
 
-      if (userQuery.includes("bull's cage") || userQuery.includes("bulls cage")) {
-        aiResponse = "Bull's Cage is our flagship stock pitch competition. It’s a great way to practice valuation and presentation skills in front of industry judges!";
-      } else if (userQuery.includes("hiring") || userQuery.includes("apply") || userQuery.includes("join")) {
-        aiResponse = "Our main recruitment cycle happens in September. Keep an eye on the 'Join Us' page for application details!";
-      } else if (userQuery.includes("portfolio")) {
-        aiResponse = "FINSA has several portfolios including Public Equity, Private Equity, and Fixed Income. Each offers unique learning opportunities.";
-      }
-
+      const data = await res.json();
+      const aiResponse = data.reply || "Sorry, I couldn't process that. Please try again.";
       setMessages((prev) => [...prev, { role: 'ai', content: aiResponse }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: 'ai', content: 'Something went wrong. Please try again.' }]);
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   return (
