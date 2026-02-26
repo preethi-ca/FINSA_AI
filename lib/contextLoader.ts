@@ -11,12 +11,12 @@ const MIN_SCORE_TO_INCLUDE = 1;
 
 // Map of context filename → keywords that trigger it
 const CONTEXT_KEYWORDS: Record<string, string[]> = {
-  'recruitment.md': ['hiring', 'apply', 'join', 'recruitment', 'application', 'role', 'position', 'resume', 'interview', 'timeline', 'faq', 'choose portfolio', 'placement'],
-  'portfolios.md': ['portfolio', 'equity', 'fixed income', 'quantitative', 'invest', 'fund', 'asset', 'public equity', 'private equity', 'operations'],
+  'recruitment.md': ['hiring', 'apply', 'join', 'recruitment', 'application', 'role', 'position', 'resume', 'résumé', 'interview', 'timeline', 'faq', 'choose portfolio', 'placement', 'tips'],
+  'portfolios.md': ['portfolio', 'portfolios', 'finance', 'design', 'technology', 'tech', 'external', 'corporate relations', 'marketing', 'hr', 'human resources', 'events', 'branding', 'sponsor', 'treasury', 'budget'],
   'bulls_cage.md': ["bull's cage", 'bulls cage', 'stock pitch', 'competition', 'pitch', 'valuation'],
   'events.md': ['event', 'events', 'upcoming', 'speaker', 'workshop', 'recap', 'calendar'],
   'exec.md': ['exec', 'executive', 'leadership', 'contact', 'office hours', 'bios', 'team', 'who runs'],
-  'general.md': ['finsa', 'about', 'who are you', 'what is finsa', 'mission', 'history', 'structure', 'culture'],
+  'general.md': ['finsa', 'about', 'who are you', 'what is finsa', 'mission', 'history', 'structure', 'culture', 'sponsor', 'sponsorship', 'donate', 'partner', 'partnership', 'website', 'link'],
 };
 
 function scoreFile(query: string, keywords: string[]): number {
