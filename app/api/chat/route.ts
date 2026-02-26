@@ -47,15 +47,15 @@ ${context || '(No specific context matched; use general FINSA knowledge and sugg
       systemInstruction,
     });
     const result = await model.generateContent({
-      contents: contents,
+      contents,
       generationConfig: {
-        maxOutputTokens: 300,
-        temperature: 0.6,
+        maxOutputTokens: 700,
+        temperature: 0.7,
       },
     });
-    const reply = result.response.text();
+    const response = result.response.text();
 
-    return NextResponse.json({ reply, contextSources: sources });
+    return NextResponse.json({ reply: response, contextSources: sources });
   } catch (error) {
     console.error('[Chat API Error]', error);
     return NextResponse.json({ error: 'Failed to generate response' }, { status: 500 });
