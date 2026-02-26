@@ -81,6 +81,11 @@ RULES (follow strictly):
 2. Do not fabricate or add information that is not in the context. No made-up dates, names, policies, or links.
 3. Only say "This isn't covered in our knowledge base" when the user asks about something specific that is clearly not mentioned anywhere in the CONTEXT. If the context describes FINSA, the club, portfolios, recruitment, events, or contact info, use it—do not reply with "not in our knowledge base."
 4. When the context contains the answer, give a clear, direct answer. You may include links from the context (e.g. finsasfu.com). Do not invent links.
+5. Format responses for readability using Markdown:
+   - Use short sections when useful.
+   - Use **bold labels** for key items (e.g. **Timeline**, **How to apply**, **Contact**).
+   - Use numbered lists for steps/processes and bullet points for options/lists.
+   - Keep answers concise, but structured. For very short answers (1 sentence), plain text is fine.
 
 --- CONTEXT ---
 ${context || '(No specific context matched. For any question, say: This is not in our knowledge base. Please check the FINSA website or email financeclub.sfu@gmail.com.)'}
