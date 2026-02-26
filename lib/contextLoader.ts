@@ -3,6 +3,11 @@ import path from 'path';
 
 const CONTEXTS_DIR = path.join(process.cwd(), 'contexts');
 
+/** Max number of context files to combine when the user's question spans multiple topics */
+const MAX_CONTEXT_FILES = 3;
+
+/** Minimum score for a file to be included (besides the single best one) */
+const MIN_SCORE_TO_INCLUDE = 1;
 
 // Map of context filename → keywords that trigger it
 const CONTEXT_KEYWORDS: Record<string, string[]> = {
@@ -14,31 +19,53 @@ const CONTEXT_KEYWORDS: Record<string, string[]> = {
   'general.md': ['finsa', 'about', 'who are you', 'what is finsa', 'mission', 'history', 'structure', 'culture'],
 };
 
-export function findBestContext(userQuery: string): string {
+function scoreFile(query: string, keywords: string[]): number {
+  return keywords.reduce((acc, kw) => acc + (query.includes(kw) ? 1 : 0), 0);
+}
+
+/**
+ * Returns combined context content and the list of source files used.
+ * Uses the best-matching file and up to (MAX_CONTEXT_FILES - 1) other files with score >= MIN_SCORE_TO_INCLUDE
+ * so that multi-topic questions (e.g. "events and recruitment") get relevant context from both.
+ */
+export function getContextForQuery(userQuery: string): { content: string; sources: string[] } {
   const query = userQuery.toLowerCase();
 
-  let bestFile = 'general.md';
-  let bestScore = 0;
-
+  const scored: { filename: string; score: number }[] = [];
   for (const [filename, keywords] of Object.entries(CONTEXT_KEYWORDS)) {
-    const score = keywords.reduce((acc, kw) => {
-      return acc + (query.includes(kw) ? 1 : 0);
-    }, 0);
+    const score = scoreFile(query, keywords);
+    scored.push({ filename, score });
+  }
 
-    if (score > bestScore) {
-      bestScore = score;
-      bestFile = filename;
+  // Sort by score descending; take up to MAX_CONTEXT_FILES with score >= MIN_SCORE_TO_INCLUDE (or at least the best one)
+  scored.sort((a, b) => b.score - a.score);
+  const toLoad = scored.filter((s) => s.score >= MIN_SCORE_TO_INCLUDE).slice(0, MAX_CONTEXT_FILES);
+  const filesToLoad = toLoad.length > 0 ? toLoad : scored.filter((s) => s.score > 0).slice(0, 1);
+
+  const parts: string[] = [];
+  const sources: string[] = [];
+
+  for (const { filename } of filesToLoad) {
+    const filePath = path.join(CONTEXTS_DIR, filename);
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      parts.push(`--- ${filename} ---\n${content}`);
+      sources.push(filename);
+    } catch {
+      console.warn(`[ContextLoader] Could not read ${filename}.`);
     }
   }
 
-  const filePath = path.join(CONTEXTS_DIR, bestFile);
+  const content = parts.length > 0 ? parts.join('\n\n') : '';
+  console.log(`[ContextLoader] Using: ${sources.join(', ')}`);
+  return { content, sources };
+}
 
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    console.log(`[ContextLoader] Using: ${bestFile} (score: ${bestScore})`);
-    return content;
-  } catch {
-    console.warn(`[ContextLoader] Could not read ${bestFile}, using empty context.`);
-    return '';
-  }
+/**
+ * Returns context from the single best-matching file (legacy behavior).
+ * Prefer getContextForQuery() for multi-topic awareness and source attribution.
+ */
+export function findBestContext(userQuery: string): string {
+  const { content } = getContextForQuery(userQuery);
+  return content;
 }

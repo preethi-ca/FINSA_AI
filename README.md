@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+**FINSA AI** includes a context-aware chatbot that answers from markdown files in `contexts/`. See **[Context awareness – how it works](docs/CONTEXT_AWARENESS.md)** for a full explanation you can share with the team.
+
 ## Getting Started
 
 First, run the development server:
