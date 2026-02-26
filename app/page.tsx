@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, ShieldCheck, TrendingUp } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 const FinsaChatPro = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,7 +11,6 @@ const FinsaChatPro = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  // Ref to automatically scroll to the bottom of the chat
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,11 +52,9 @@ const FinsaChatPro = () => {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans text-slate-900">
-      {/* 1. The Chat Window */}
       {isOpen && (
         <div className="mb-4 w-80 sm:w-[400px] h-[550px] flex flex-col border border-white/20 rounded-3xl bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden animate-in fade-in zoom-in duration-200">
 
-          {/* High-End Header */}
           <div className="bg-[#1a1a1a] p-5 text-white flex justify-between items-center border-b border-white/10">
             <div>
               <div className="flex items-center gap-2">
@@ -73,15 +71,34 @@ const FinsaChatPro = () => {
             </button>
           </div>
 
-          {/* Chat Body */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-5 bg-[#fcfcfc]">
             {messages.map((msg, i) => (
               <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className={`p-4 rounded-2xl text-[13.5px] leading-relaxed max-w-[85%] shadow-sm ${msg.role === 'user'
-                    ? 'bg-[#582C83] text-white rounded-tr-none'
-                    : 'bg-white border border-gray-100 text-gray-700 rounded-tl-none'
+                  ? 'bg-[#582C83] text-white rounded-tr-none'
+                  : 'bg-white border border-gray-100 text-gray-700 rounded-tl-none'
                   }`}>
-                  {msg.content}
+                  {/* Updated to use ReactMarkdown for AI responses */}
+                  {msg.role === 'ai' ? (
+                    <div className="markdown-container prose prose-sm max-w-none break-words prose-a:text-blue-600 prose-a:font-bold prose-a:underline hover:prose-a:text-blue-800">
+                      <ReactMarkdown
+                        components={{
+                          a: ({ node, ...props }) => (
+                            <a
+                              {...props}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 font-bold underline hover:text-blue-800 transition-colors cursor-pointer"
+                            />
+                          ),
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
                 {msg.role === 'ai' && msg.sources && msg.sources.length > 0 && (
                   <span className="mt-1 text-[10px] text-gray-400 px-1">
@@ -91,7 +108,6 @@ const FinsaChatPro = () => {
               </div>
             ))}
 
-            {/* Typing Indicator */}
             {isTyping && (
               <div className="flex justify-start">
                 <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
@@ -103,7 +119,6 @@ const FinsaChatPro = () => {
             )}
           </div>
 
-          {/* Professional Input Area */}
           <form onSubmit={handleSend} className="p-4 bg-white border-t border-gray-100 flex items-center gap-2">
             <input
               value={input}
@@ -116,7 +131,6 @@ const FinsaChatPro = () => {
             </button>
           </form>
 
-          {/* Footer Branding */}
           <div className="bg-gray-50 py-2 px-4 flex justify-center border-t border-gray-100">
             <span className="text-[9px] text-gray-400 uppercase tracking-[0.2em] font-medium flex items-center gap-1">
               <ShieldCheck size={10} /> Verified Student Resource
@@ -125,7 +139,6 @@ const FinsaChatPro = () => {
         </div>
       )}
 
-      {/* Premium Launcher Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="bg-[#1a1a1a] text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-90 group"
