@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 
 const FinsaChatPro = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string; sources?: string[] }[]>([
     { role: 'ai', content: 'Welcome to FINSA AI. How can I assist your finance journey today?' }
   ]);
   const [input, setInput] = useState('');
@@ -23,7 +23,7 @@ const FinsaChatPro = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const userMessage = { role: 'user', content: input };
+    const userMessage = { role: 'user' as const, content: input };
     setMessages((prev) => [...prev, userMessage]);
     const userQuery = input;
     setInput('');
@@ -33,12 +33,16 @@ const FinsaChatPro = () => {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userQuery }),
+        body: JSON.stringify({
+          message: userQuery,
+          messages: [...messages, userMessage],
+        }),
       });
 
       const data = await res.json();
       const aiResponse = data.reply || "Sorry, I couldn't process that. Please try again.";
-      setMessages((prev) => [...prev, { role: 'ai', content: aiResponse }]);
+      const sources: string[] = data.contextSources ?? [];
+      setMessages((prev) => [...prev, { role: 'ai', content: aiResponse, sources }]);
     } catch {
       setMessages((prev) => [...prev, { role: 'ai', content: 'Something went wrong. Please try again.' }]);
     } finally {
@@ -69,7 +73,7 @@ const FinsaChatPro = () => {
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-5 bg-[#fcfcfc]">
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className={`p-4 rounded-2xl text-[13.5px] leading-relaxed max-w-[85%] shadow-sm ${msg.role === 'user'
                   ? 'bg-[#582C83] text-white rounded-tr-none'
                   : 'bg-white border border-gray-100 text-gray-700 rounded-tl-none'
@@ -96,6 +100,11 @@ const FinsaChatPro = () => {
                     msg.content
                   )}
                 </div>
+                {msg.role === 'ai' && msg.sources && msg.sources.length > 0 && (
+                  <span className="mt-1 text-[10px] text-gray-400 px-1">
+                    Based on: {msg.sources.map((s) => s.replace('.md', '')).join(', ')}
+                  </span>
+                )}
               </div>
             ))}
 
