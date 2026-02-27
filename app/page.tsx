@@ -96,7 +96,7 @@ const FinsaChatPro = () => {
                     <div className="markdown-container prose prose-sm max-w-none break-words prose-a:text-blue-600 prose-a:font-bold prose-a:underline hover:prose-a:text-blue-800">
                       <ReactMarkdown
                         components={{
-                          a: ({ node, ...props }) => (
+                          a: ({ ...props }) => (
                             <a
                               {...props}
                               target="_blank"

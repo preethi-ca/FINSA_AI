@@ -18,6 +18,31 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Observability Setup
+
+This project is configured for:
+
+- **Sentry** for error monitoring (`@sentry/nextjs`)
+- **LangFuse** for LLM observability/tracing (`langfuse`)
+
+1. Copy env template and fill values:
+
+```bash
+cp .env.example .env.local
+```
+
+2. Add required keys:
+
+- `GEMINI_API_KEY` (or `GEMINI_API_KEYS` for rotation)
+- `NEXT_PUBLIC_SENTRY_DSN` (and optionally `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`)
+- `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` (and optional `LANGFUSE_BASE_URL`)
+
+3. Restart the dev server after updating env vars.
+
+Notes:
+- Sentry captures server/API exceptions in `app/api/chat/route.ts`.
+- LangFuse traces each chat request, model attempts, failures, and successful responses.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
