@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getContextForQuery } from '@/lib/contextLoader';
+import { endChatTrace, flushObservability, logModelAttempt, startChatTrace } from '@/lib/observability';
 
 function getGeminiApiKeys(): string[] {
   const single = (process.env.GEMINI_API_KEY ?? '').trim();
@@ -72,6 +73,11 @@ export async function POST(req: NextRequest) {
 
     // 1. Get relevant context (multi-file) and source names for attribution
     const { content: context, sources } = getContextForQuery(lastUserMessage);
+    const trace = startChatTrace({
+      userMessage: lastUserMessage,
+      contextSources: sources,
+      apiKeyCount: apiKeys.length,
+    });
 
     // 2. System instruction: answer only from context; no fabrication
     const systemInstruction = `You are FINSA AI, a helpful assistant for the Finance Students' Association (FINSA).
@@ -111,26 +117,42 @@ ${context || '(No specific context matched. For any question, say: This is not i
       const genAI = new GoogleGenerativeAI(apiKey);
       for (const modelId of FALLBACK_MODELS) {
         try {
+          logModelAttempt(trace, { modelId, stage: 'start' });
           const model = genAI.getGenerativeModel({ model: modelId, systemInstruction });
           const result = await model.generateContent({ contents, generationConfig });
           const response = result.response;
           if (!response.candidates?.length || !response.candidates[0].content?.parts?.length) {
             console.warn(`[Chat API] ${modelId} returned empty/blocked response, trying next.`);
+            logModelAttempt(trace, { modelId, stage: 'empty-or-blocked' });
             continue;
           }
           const replyText = response.text()?.trim() ?? '';
           if (!replyText) {
             console.warn(`[Chat API] ${modelId} returned empty text, trying next.`);
             allEmpty = true;
+            logModelAttempt(trace, { modelId, stage: 'empty-text' });
             continue;
           }
+          endChatTrace(trace, {
+            output: { modelId, replyLength: replyText.length, status: 'success' },
+          });
+          await flushObservability();
           return NextResponse.json({ reply: replyText, contextSources: sources });
         } catch (err) {
           lastError = err;
+          logModelAttempt(trace, {
+            modelId,
+            stage: 'error',
+            error: err instanceof Error ? err.message : String(err),
+          });
           if (isRateLimitOrQuotaError(err) || isUnavailableModelError(err)) {
             console.warn(`[Chat API] ${modelId} unavailable/rate-limited, falling back to next model/key.`, err);
             continue;
           }
+          endChatTrace(trace, {
+            output: { modelId, status: 'fatal-error', error: err instanceof Error ? err.message : String(err) },
+          });
+          await flushObservability();
           throw err;
         }
       }
@@ -138,12 +160,21 @@ ${context || '(No specific context matched. For any question, say: This is not i
 
     if (allEmpty) {
       console.error('[Chat API] All models returned empty text.');
+      endChatTrace(trace, { output: { status: 'all-empty' } });
+      await flushObservability();
       return NextResponse.json({
         reply: "I couldn't generate a response for that. Please try rephrasing your question or email financeclub.sfu@gmail.com for help.",
         contextSources: sources,
       });
     }
     console.error('[Chat API] All models failed or rate limited.', lastError);
+    endChatTrace(trace, {
+      output: {
+        status: 'all-failed',
+        error: lastError instanceof Error ? lastError.message : String(lastError),
+      },
+    });
+    await flushObservability();
     return NextResponse.json(
       { error: lastError instanceof Error ? lastError.message : 'All models unavailable or rate limited.' },
       { status: 503 }
