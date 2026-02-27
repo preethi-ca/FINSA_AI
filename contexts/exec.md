@@ -2,7 +2,7 @@
 
 ## Leadership
 The exec team leads FINSA and runs portfolios, events, and recruitment. (Add names, roles, and short bios here.)
-
+Raghav A
 
 ## Contact
 - **Recruitment / joining:** financeclub.sfu@gmail.com.
